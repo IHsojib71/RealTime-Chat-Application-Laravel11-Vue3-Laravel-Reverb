@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, defineProps } from 'vue';
+import { ref, onMounted, defineProps, watch, nextTick } from 'vue';
 
 import { usePage } from '@inertiajs/vue3';
 
@@ -14,6 +14,21 @@ const props = defineProps({
     },
 
 })
+
+const messageContainer = ref(null);
+
+watch(messages, () => {
+    nextTick(() => {
+        messageContainer.value.scrollTo({
+        top: messageContainer.value.scrollHeight,
+        behavior : "smooth",
+      })
+    })
+    messageContainer.value.scrollTo({
+        top: messageContainer.value.scrollHeight,
+        behavior : "smooth",
+    })
+}, { deep: true });
 
 const newMessage = ref('');
 
@@ -41,13 +56,17 @@ onMounted(() => {
         })
         .catch((error) => {
             console.log(error);
-    })
+        })
+    Echo.private(`chat.${currentUser.id}`)
+        .listen('MessageSentEvent', (response) => {
+            messages.value.push(response.message);
+        })
 })
 </script>
 
 <template>
   <div class="flex flex-col p-4">
-    <div class="flex-grow overflow-y-auto space-y-4">
+    <div ref="messageContainer" class="flex-grow overflow-y-auto space-y-4 h-[450px]">
       <div v-for="(message,index) in messages" :key="message.id" :class="message.sender_id === currentUser.id ? 'text-right' : ''">
         <div :class="message.sender_id === currentUser.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'" class="inline-block px-4 py-2 rounded-3xl">
           {{ message.message }}
