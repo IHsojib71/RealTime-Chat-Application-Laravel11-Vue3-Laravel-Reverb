@@ -25,19 +25,6 @@ watch(messages, () => {
       })
     })
 }, { deep: true });
-watch(userTyping, () => {
-    nextTick(() => {
-        if (userTyping.value === true)
-        {
-            messageContainer.value.scrollTo({
-            top: messageContainer.value.scrollHeight,
-            behavior : "smooth",
-      })
-        }
-
-    })
-
-});
 
 const newMessage = ref('');
 
