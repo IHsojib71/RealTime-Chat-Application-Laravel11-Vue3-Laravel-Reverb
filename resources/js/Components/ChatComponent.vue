@@ -1,27 +1,56 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, defineProps } from 'vue';
 
-const messages = ref([
-  { text: 'Hello!', sender: 'user' },
-  { text: 'Hi there!', sender: 'bot' },
-]);
+import { usePage } from '@inertiajs/vue3';
+
+const messages = ref();
+
+const currentUser = usePage().props.auth.user;
+
+const props = defineProps({
+    friend: {
+        type: Object,
+        required: true,
+    },
+
+})
 
 const newMessage = ref('');
 
-function sendMessage() {
-  if (newMessage.value.trim()) {
-    messages.value.push({ text: newMessage.value, sender: 'user' });
-    newMessage.value = '';
-  }
+const sendMessage = () => {
+    if (newMessage.value.trim() !== "")
+    {
+        axios.post(route('chat.sendMessage', props.friend.id), {
+            message: newMessage.value,
+        })
+        .then((response) => {
+            newMessage.value = "";
+            messages.value.push(response.data.message);
+        })
+        .catch((error) => {
+            console.log(error);
+        })
+
+    }
 }
+
+onMounted(() => {
+    axios.get(route('chat.fetchMessages', props.friend.id))
+        .then((response) => {
+            messages.value = response.data.messages;
+        })
+        .catch((error) => {
+            console.log(error);
+    })
+})
 </script>
 
 <template>
   <div class="flex flex-col p-4">
     <div class="flex-grow overflow-y-auto space-y-4">
-      <div v-for="message in messages" :key="message.text" :class="message.sender === 'user' ? 'text-right' : ''">
-        <div :class="message.sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'" class="inline-block px-4 py-2 rounded-3xl">
-          {{ message.text }}
+      <div v-for="(message,index) in messages" :key="message.id" :class="message.sender_id === currentUser.id ? 'text-right' : ''">
+        <div :class="message.sender_id === currentUser.id ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-800'" class="inline-block px-4 py-2 rounded-3xl">
+          {{ message.message }}
         </div>
       </div>
     </div>
